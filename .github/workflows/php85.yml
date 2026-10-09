@@ -1,0 +1,20 @@
+name: PHP 8.5 compatibility
+
+on: [push, pull_request]
+
+jobs:
+  php85:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: gd, intl, ldap, pdo_mysql
+      - name: Lint all PHP source files
+        run: find . -name '*.php' -not -path './vendor/*' -not -path './.Build/*' -not -path './.git/*' -print0 | xargs -0 -n 1 php -l
+      - name: Resolve actual dependencies with security blocking enabled
+        run: composer update --no-interaction --no-progress --no-scripts
+      - run: composer validate --no-check-publish
+      - run: composer check-platform-reqs
+      - run: composer audit --abandoned=report
